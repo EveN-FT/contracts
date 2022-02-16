@@ -40,6 +40,13 @@ abstract contract ERC1155 {
 
     mapping(address => mapping(address => bool)) public isApprovedForAll;
 
+    // Mapping from ticket ID to event address
+    mapping(uint256 => address) public events;
+
+    // Mapping from ticket ID to ticket info
+    mapping(uint256 => string) public info;
+
+
     /*///////////////////////////////////////////////////////////////
                              METADATA LOGIC
     //////////////////////////////////////////////////////////////*/
@@ -155,11 +162,14 @@ abstract contract ERC1155 {
 
     function _mint(
         address to,
+        uint256 amount,
         address eventAddress,
-        uint256 amount
+        string metadata
     ) internal {
         uint256 id = _tokenSupply.current();
         balanceOf[to][id] += amount;
+        info[id] = metadata;
+        events[id] = eventAddress;
 
         emit TransferSingle(msg.sender, address(0), to, id, amount);
 
@@ -176,16 +186,19 @@ abstract contract ERC1155 {
 
     function _batchMint(
         address to,
-        address[] eventAddress,
-        uint256[] memory amounts
+        uint256[] memory amounts,
+        address[] eventAddresses,
+        string[] memory metadata
     ) internal {
-        uint256 eventsLength = eventAddress.length; // Saves MLOADs.
+        uint256 eventsLength = eventAddresses.length; // Saves MLOADs.
 
         require(eventsLength == amounts.length, "LENGTH_MISMATCH");
 
         for (uint256 i = 0; i < eventsLength; ) {
             uint256 id = _tokenSupply.current();
             balanceOf[to][id] += amounts[i];
+            info[id] = metadata[i];
+            events[id] = eventAddresses[i];
 
             // after minting
             _tokenSupply.increment();

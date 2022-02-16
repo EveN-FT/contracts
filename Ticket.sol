@@ -4,22 +4,7 @@ pragma solidity ^0.8.0;
 import "./Slim1155.sol";
 import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/Counters.sol";
 
-contract Ticket is ERC115 {
-    string public constant name;
-    address public constant owner;
-    address public constant eventAddress;
-
-    constructor(
-        address owner,
-        string memory name,
-        address eventAddress
-    )
-    {
-        self.name = name;
-        self.owner = owner;
-        self.eventAddress = eventAddress;
-    }
-
+contract Ticket is ERC1155 {
     modifier onlyOwner {
         require(msg.sender == self.owner);
         _;
@@ -27,18 +12,29 @@ contract Ticket is ERC115 {
     // Mint Funglible tokens
     function mint(
         address to,
-        uint256 eventAddress,
-        uint256 amount
+        uint256 amount,
+        address eventAddress,
+        string
     ) external onlyOwner {
-        _mint(to, eventAddress, amount);
+        _mint(to, amount, eventAddress, metadata);
     }
 
     // Mint Non-Funglible tokens
     function batchMint(
         address to,
+        uint256[] memory amounts,
         address[] memory eventAddresses,
-        uint256[] memory amounts
+        string[] memory metadata
     ) external onlyOwner {
-        _batchMint(to, eventAddresses, amounts);
+        _batchMint(to, amounts, eventAddresses, metadata);
     }
+
+    function eventUri(uint256 ticketID) public view returns (string memory) {
+        return events[ticketID].metadata;
+    }
+
+    function uri(uint256 ticketID) public view returns (string memory) {
+        return info[ticketID];
+    }
+
 }
