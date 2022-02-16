@@ -170,8 +170,8 @@ abstract contract ERC1155 {
 
     function _batchMint(
         address to,
-        address[] eventAddress
-        uint256[] memory amounts,
+        address[] eventAddress,
+        uint256[] memory amounts
     ) internal {
         uint256 idsLength = ids.length; // Saves MLOADs.
 
