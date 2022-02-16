@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.0;
 
-import "@Rari-Capital/solmate/blob/main/src/tokens/ERC1155.sol";
+import "./Slim1155.sol";
+import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/Counters.sol";
 
 contract Ticket is ERC115 {
     string public constant name;
@@ -12,12 +13,10 @@ contract Ticket is ERC115 {
     constructor(
         address owner,
         string memory name,
-        string memory symbol,
         address eventAddress
     )
     {
         self.name = name;
-        self.symbol = symbol;
         self.owner = owner;
         self.eventAddress = eventAddress;
     }
@@ -29,17 +28,18 @@ contract Ticket is ERC115 {
     // Mint Funglible tokens
     function mint(
         address to,
-        uint256 id,
+        uint256 eventAddress,
         uint256 amount
     ) external onlyOwner {
-        _mint(to, id, amount, "");
+        _mint(to, eventAddress, amount);
     }
+
     // Mint Non-Funglible tokens
     function batchMint(
         address to,
-        uint256[] memory ids,
+        address[] memory eventAddresses,
         uint256[] memory amounts
     ) external onlyOwner {
-        _batchMint(to, ids, amounts, "");
+        _batchMint(to, eventAddresses, amounts);
     }
 }
