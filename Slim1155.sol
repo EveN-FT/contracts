@@ -1,9 +1,13 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity >=0.8.0;
 
+import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/Counters.sol";
+
 /// @notice Minimalist and gas efficient standard ERC1155 implementation.
 /// @author Solmate (https://github.com/Rari-Capital/solmate/blob/main/src/tokens/ERC1155.sol)
 abstract contract ERC1155 {
+    using Counters for Counters.Counter;
+    Counters.Counter private _tokenSupply;
     /*///////////////////////////////////////////////////////////////
                                 EVENTS
     //////////////////////////////////////////////////////////////*/
@@ -154,8 +158,8 @@ abstract contract ERC1155 {
         address eventAddress,
         uint256 amount
     ) internal {
+        uint256 id = _tokenSupply.current();
         balanceOf[to][id] += amount;
-        // counter here?
 
         emit TransferSingle(msg.sender, address(0), to, id, amount);
 
@@ -166,6 +170,8 @@ abstract contract ERC1155 {
                     ERC1155TokenReceiver.onERC1155Received.selector,
             "UNSAFE_RECIPIENT"
         );
+        // after minting
+        _tokenSupply.increment();
     }
 
     function _batchMint(
@@ -173,13 +179,16 @@ abstract contract ERC1155 {
         address[] eventAddress,
         uint256[] memory amounts
     ) internal {
-        uint256 idsLength = ids.length; // Saves MLOADs.
+        uint256 eventsLength = eventAddress.length; // Saves MLOADs.
 
-        require(idsLength == amounts.length, "LENGTH_MISMATCH");
+        require(eventsLength == amounts.length, "LENGTH_MISMATCH");
 
-        for (uint256 i = 0; i < idsLength; ) {
-            balanceOf[to][ids[i]] += amounts[i];
+        for (uint256 i = 0; i < eventsLength; ) {
+            uint256 id = _tokenSupply.current();
+            balanceOf[to][id] += amounts[i];
 
+            // after minting
+            _tokenSupply.increment();
             // An array can't have a total length
             // larger than the max uint256 value.
             unchecked {

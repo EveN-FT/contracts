@@ -6,7 +6,6 @@ import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contr
 
 contract Ticket is ERC115 {
     string public constant name;
-    string public constant symbol;
     address public constant owner;
     address public constant eventAddress;
 
