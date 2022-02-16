@@ -91,7 +91,7 @@ abstract contract ERC1155 {
         require(
             to.code.length == 0
                 ? to != address(0)
-                : ERC1155TokenReceiver(to).onERC1155Received(msg.sender, from, id, amount, data) ==
+                : ERC1155TokenReceiver(to).onERC1155Received(msg.sender, from, id, amount) ==
                     ERC1155TokenReceiver.onERC1155Received.selector,
             "UNSAFE_RECIPIENT"
         );
@@ -101,8 +101,7 @@ abstract contract ERC1155 {
         address from,
         address to,
         uint256[] memory ids,
-        uint256[] memory amounts,
-        bytes memory data
+        uint256[] memory amounts
     ) public virtual {
         uint256 idsLength = ids.length; // Saves MLOADs.
 
@@ -135,7 +134,7 @@ abstract contract ERC1155 {
         require(
             to.code.length == 0
                 ? to != address(0)
-                : ERC1155TokenReceiver(to).onERC1155BatchReceived(msg.sender, from, ids, amounts, data) ==
+                : ERC1155TokenReceiver(to).onERC1155BatchReceived(msg.sender, from, ids, amounts) ==
                     ERC1155TokenReceiver.onERC1155BatchReceived.selector,
             "UNSAFE_RECIPIENT"
         );
@@ -181,8 +180,10 @@ abstract contract ERC1155 {
         address to,
         uint256 amount,
         address eventAddress,
-        string metadata
+        string memory metadata
     ) internal {
+        require(msg.sender == Event(eventAddress).owner, "NOT_EVENT_OWNER");
+
         uint256 id = _tokenSupply.current();
         balanceOf[to][id] += amount;
         info[id] = metadata;
@@ -204,18 +205,21 @@ abstract contract ERC1155 {
     function _batchMint(
         address to,
         uint256[] memory amounts,
-        address[] eventAddresses,
+        address[] memory eventAddresses,
         string[] memory metadata
     ) internal {
         uint256 eventsLength = eventAddresses.length; // Saves MLOADs.
 
         require(eventsLength == amounts.length, "LENGTH_MISMATCH");
 
-        uint256[] memory ids;
+        uint256[] memory ids = new uint256[](eventsLength);
 
         for (uint256 i = 0; i < eventsLength; ) {
+
+            require(msg.sender == Event(eventAddresses[i]).owner, "NOT_EVENT_OWNER");
+
             uint256 id = _tokenSupply.current();
-            ids.push(id);
+            ids[i]= id;
 
             balanceOf[to][id] += amounts[i];
             info[id] = metadata[i];
@@ -235,7 +239,7 @@ abstract contract ERC1155 {
         require(
             to.code.length == 0
                 ? to != address(0)
-                : ERC1155TokenReceiver(to).onERC1155BatchReceived(msg.sender, address(0), ids, amounts) ==
+                : ERC1155TokenReceiver(to).onERC1155BatchReceived(msg.sender, address(0), ids, amounts, eventAddresses) ==
                     ERC1155TokenReceiver.onERC1155BatchReceived.selector,
             "UNSAFE_RECIPIENT"
         );
@@ -290,42 +294,42 @@ interface ERC1155TokenReceiver {
         address from,
         uint256[] calldata ids,
         uint256[] calldata amounts,
-        address[] eventAddresses
+        address[] memory eventAddresses
     ) external returns (bytes4);
 }
 
 contract Ticket is ERC1155 {
-    modifier onlyOwner {
-        require(msg.sender == self.owner);
-        _;
-    }
 
     // Mint Funglible tokens
-    function mint(
+    function mint (
         address to,
         uint256 amount,
         address eventAddress,
-        string metadata
-    ) external onlyOwner {
+        string memory metadata
+    ) public {
         _mint(to, amount, eventAddress, metadata);
     }
 
     // Mint Non-Funglible tokens
-    function batchMint(
+    function batchMint (
         address to,
         uint256[] memory amounts,
         address[] memory eventAddresses,
         string[] memory metadata
-    ) external onlyOwner {
+    ) public {
         _batchMint(to, amounts, eventAddresses, metadata);
     }
 
     function eventUri(uint256 ticketID) public view returns (string memory) {
-        return events[ticketID].metadata;
+        return Event(events[ticketID]).metadata;
     }
 
-    function uri(uint256 ticketID) public view returns (string memory) {
+    function uri(uint256 ticketID) public view override returns (string memory) {
         return info[ticketID];
     }
-
+}
+interface Event {
+    string public name;
+    address public owner;
+    string public metadata;
 }
