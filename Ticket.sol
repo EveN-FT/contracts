@@ -3,43 +3,6 @@ pragma solidity ^0.8.0;
 
 import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/Counters.sol";
 
-contract Ticket is ERC1155 {
-    modifier onlyOwner {
-        require(msg.sender == self.owner);
-        _;
-    }
-
-    // Mint Funglible tokens
-    function mint(
-        address to,
-        uint256 amount,
-        address eventAddress,
-        string
-    ) external onlyOwner {
-        _mint(to, amount, eventAddress, metadata);
-    }
-
-    // Mint Non-Funglible tokens
-    function batchMint(
-        address to,
-        uint256[] memory amounts,
-        address[] memory eventAddresses,
-        string[] memory metadata
-    ) external onlyOwner {
-        _batchMint(to, amounts, eventAddresses, metadata);
-    }
-
-    function eventUri(uint256 ticketID) public view returns (string memory) {
-        return events[ticketID].metadata;
-    }
-
-    function uri(uint256 ticketID) public view returns (string memory) {
-        return info[ticketID];
-    }
-
-}
-
-
 /// @notice Minimalist and gas efficient standard ERC1155 implementation.
 /// @author Solmate (https://github.com/Rari-Capital/solmate/blob/main/src/tokens/ERC1155.sol)
 abstract contract ERC1155 {
@@ -230,7 +193,7 @@ abstract contract ERC1155 {
         require(
             to.code.length == 0
                 ? to != address(0)
-                : ERC1155TokenReceiver(to).onERC1155Received(msg.sender, address(0), id, amount, data) ==
+                : ERC1155TokenReceiver(to).onERC1155Received(msg.sender, address(0), id, amount) ==
                     ERC1155TokenReceiver.onERC1155Received.selector,
             "UNSAFE_RECIPIENT"
         );
@@ -248,8 +211,12 @@ abstract contract ERC1155 {
 
         require(eventsLength == amounts.length, "LENGTH_MISMATCH");
 
+        uint256[] memory ids;
+
         for (uint256 i = 0; i < eventsLength; ) {
             uint256 id = _tokenSupply.current();
+            ids.push(id);
+
             balanceOf[to][id] += amounts[i];
             info[id] = metadata[i];
             events[id] = eventAddresses[i];
@@ -268,7 +235,7 @@ abstract contract ERC1155 {
         require(
             to.code.length == 0
                 ? to != address(0)
-                : ERC1155TokenReceiver(to).onERC1155BatchReceived(msg.sender, address(0), ids, amounts, data) ==
+                : ERC1155TokenReceiver(to).onERC1155BatchReceived(msg.sender, address(0), ids, amounts) ==
                     ERC1155TokenReceiver.onERC1155BatchReceived.selector,
             "UNSAFE_RECIPIENT"
         );
@@ -325,4 +292,40 @@ interface ERC1155TokenReceiver {
         uint256[] calldata amounts,
         address[] eventAddresses
     ) external returns (bytes4);
+}
+
+contract Ticket is ERC1155 {
+    modifier onlyOwner {
+        require(msg.sender == self.owner);
+        _;
+    }
+
+    // Mint Funglible tokens
+    function mint(
+        address to,
+        uint256 amount,
+        address eventAddress,
+        string metadata
+    ) external onlyOwner {
+        _mint(to, amount, eventAddress, metadata);
+    }
+
+    // Mint Non-Funglible tokens
+    function batchMint(
+        address to,
+        uint256[] memory amounts,
+        address[] memory eventAddresses,
+        string[] memory metadata
+    ) external onlyOwner {
+        _batchMint(to, amounts, eventAddresses, metadata);
+    }
+
+    function eventUri(uint256 ticketID) public view returns (string memory) {
+        return events[ticketID].metadata;
+    }
+
+    function uri(uint256 ticketID) public view returns (string memory) {
+        return info[ticketID];
+    }
+
 }
