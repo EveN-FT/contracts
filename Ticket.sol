@@ -91,7 +91,7 @@ abstract contract ERC1155 {
         require(
             to.code.length == 0
                 ? to != address(0)
-                : ERC1155TokenReceiver(to).onERC1155Received(msg.sender, from, id, amount) ==
+                : ERC1155TokenReceiver(to).onERC1155Received(msg.sender, from, id, amount, "") ==
                     ERC1155TokenReceiver.onERC1155Received.selector,
             "UNSAFE_RECIPIENT"
         );
@@ -134,7 +134,7 @@ abstract contract ERC1155 {
         require(
             to.code.length == 0
                 ? to != address(0)
-                : ERC1155TokenReceiver(to).onERC1155BatchReceived(msg.sender, from, ids, amounts) ==
+                : ERC1155TokenReceiver(to).onERC1155BatchReceived(msg.sender, from, ids, amounts, "") ==
                     ERC1155TokenReceiver.onERC1155BatchReceived.selector,
             "UNSAFE_RECIPIENT"
         );
@@ -194,7 +194,7 @@ abstract contract ERC1155 {
         require(
             to.code.length == 0
                 ? to != address(0)
-                : ERC1155TokenReceiver(to).onERC1155Received(msg.sender, address(0), id, amount) ==
+                : ERC1155TokenReceiver(to).onERC1155Received(msg.sender, address(0), id, amount, "") ==
                     ERC1155TokenReceiver.onERC1155Received.selector,
             "UNSAFE_RECIPIENT"
         );
@@ -286,7 +286,7 @@ interface ERC1155TokenReceiver {
         address from,
         uint256 id,
         uint256 amount,
-        address eventAddress
+        bytes calldata data
     ) external returns (bytes4);
 
     function onERC1155BatchReceived(
@@ -294,7 +294,7 @@ interface ERC1155TokenReceiver {
         address from,
         uint256[] calldata ids,
         uint256[] calldata amounts,
-        address[] memory eventAddresses
+        bytes calldata data
     ) external returns (bytes4);
 }
 
@@ -328,6 +328,7 @@ contract Ticket is ERC1155 {
         return info[ticketID];
     }
 }
+
 interface Event {
     string public name;
     address public owner;
