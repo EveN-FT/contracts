@@ -2,6 +2,7 @@
 pragma solidity ^0.8.0;
 
 import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/Counters.sol";
+import "./Event.sol";
 
 /// @notice Minimalist and gas efficient standard ERC1155 implementation.
 /// @author Solmate (https://github.com/Rari-Capital/solmate/blob/main/src/tokens/ERC1155.sol)
@@ -28,7 +29,11 @@ abstract contract ERC1155 {
         uint256[] amounts
     );
 
-    event ApprovalForAll(address indexed owner, address indexed operator, bool approved);
+    event ApprovalForAll(
+        address indexed owner,
+        address indexed operator,
+        bool approved
+    );
 
     event URI(string value, uint256 indexed id);
 
@@ -50,7 +55,7 @@ abstract contract ERC1155 {
                             ERROR LOGIC
     //////////////////////////////////////////////////////////////*/
 
-    error InsufficientBalance(uint requested, uint available);
+    error InsufficientBalance(uint256 requested, uint256 available);
 
     /*///////////////////////////////////////////////////////////////
                              METADATA LOGIC
@@ -72,10 +77,12 @@ abstract contract ERC1155 {
         address from,
         address to,
         uint256 id,
-        uint256 amount,
-        bytes memory data
+        uint256 amount
     ) public virtual {
-        require(msg.sender == from || isApprovedForAll[from][msg.sender], "NOT_AUTHORIZED");
+        require(
+            msg.sender == from || isApprovedForAll[from][msg.sender],
+            "NOT_AUTHORIZED"
+        );
 
         if (amount > balanceOf[from][id])
             revert InsufficientBalance({
@@ -91,8 +98,13 @@ abstract contract ERC1155 {
         require(
             to.code.length == 0
                 ? to != address(0)
-                : ERC1155TokenReceiver(to).onERC1155Received(msg.sender, from, id, amount, "") ==
-                    ERC1155TokenReceiver.onERC1155Received.selector,
+                : ERC1155TokenReceiver(to).onERC1155Received(
+                    msg.sender,
+                    from,
+                    id,
+                    amount,
+                    ""
+                ) == ERC1155TokenReceiver.onERC1155Received.selector,
             "UNSAFE_RECIPIENT"
         );
     }
@@ -107,7 +119,10 @@ abstract contract ERC1155 {
 
         require(idsLength == amounts.length, "LENGTH_MISMATCH");
 
-        require(msg.sender == from || isApprovedForAll[from][msg.sender], "NOT_AUTHORIZED");
+        require(
+            msg.sender == from || isApprovedForAll[from][msg.sender],
+            "NOT_AUTHORIZED"
+        );
 
         for (uint256 i = 0; i < idsLength; ) {
             uint256 id = ids[i];
@@ -134,8 +149,13 @@ abstract contract ERC1155 {
         require(
             to.code.length == 0
                 ? to != address(0)
-                : ERC1155TokenReceiver(to).onERC1155BatchReceived(msg.sender, from, ids, amounts, "") ==
-                    ERC1155TokenReceiver.onERC1155BatchReceived.selector,
+                : ERC1155TokenReceiver(to).onERC1155BatchReceived(
+                    msg.sender,
+                    from,
+                    ids,
+                    amounts,
+                    ""
+                ) == ERC1155TokenReceiver.onERC1155BatchReceived.selector,
             "UNSAFE_RECIPIENT"
         );
     }
@@ -165,7 +185,12 @@ abstract contract ERC1155 {
                               ERC165 LOGIC
     //////////////////////////////////////////////////////////////*/
 
-    function supportsInterface(bytes4 interfaceId) public pure virtual returns (bool) {
+    function supportsInterface(bytes4 interfaceId)
+        public
+        pure
+        virtual
+        returns (bool)
+    {
         return
             interfaceId == 0x01ffc9a7 || // ERC165 Interface ID for ERC165
             interfaceId == 0xd9b67a26 || // ERC165 Interface ID for ERC1155
@@ -194,8 +219,13 @@ abstract contract ERC1155 {
         require(
             to.code.length == 0
                 ? to != address(0)
-                : ERC1155TokenReceiver(to).onERC1155Received(msg.sender, address(0), id, amount, "") ==
-                    ERC1155TokenReceiver.onERC1155Received.selector,
+                : ERC1155TokenReceiver(to).onERC1155Received(
+                    msg.sender,
+                    address(0),
+                    id,
+                    amount,
+                    ""
+                ) == ERC1155TokenReceiver.onERC1155Received.selector,
             "UNSAFE_RECIPIENT"
         );
         // after minting
@@ -215,11 +245,13 @@ abstract contract ERC1155 {
         uint256[] memory ids = new uint256[](eventsLength);
 
         for (uint256 i = 0; i < eventsLength; ) {
-
-            require(msg.sender == Event(eventAddresses[i]).owner(), "NOT_EVENT_OWNER");
+            require(
+                msg.sender == Event(eventAddresses[i]).owner(),
+                "NOT_EVENT_OWNER"
+            );
 
             uint256 id = _tokenSupply.current();
-            ids[i]= id;
+            ids[i] = id;
 
             balanceOf[to][id] += amounts[i];
             info[id] = metadata[i];
@@ -239,9 +271,21 @@ abstract contract ERC1155 {
         require(
             to.code.length == 0
                 ? to != address(0)
-                : ERC1155TokenReceiver(to).onERC1155BatchReceived(msg.sender, address(0), ids, amounts, eventAddresses) ==
-                    ERC1155TokenReceiver.onERC1155BatchReceived.selector,
+                : ERC1155TokenReceiver(to).onERC1155BatchReceived(
+                    msg.sender,
+                    address(0),
+                    ids,
+                    amounts,
+                    ""
+                ) == ERC1155TokenReceiver.onERC1155BatchReceived.selector,
             "UNSAFE_RECIPIENT"
+            //         function onERC1155BatchReceived(
+            //     address operator,
+            //     address from,
+            //     uint256[] calldata ids,
+            //     uint256[] calldata amounts,
+            //     bytes calldata data
+            // ) external returns (bytes4);
         );
     }
 
@@ -299,9 +343,8 @@ interface ERC1155TokenReceiver {
 }
 
 contract Ticket is ERC1155 {
-
     // Mint Funglible tokens
-    function mint (
+    function mint(
         address to,
         uint256 amount,
         address eventAddress,
@@ -311,7 +354,7 @@ contract Ticket is ERC1155 {
     }
 
     // Mint Non-Funglible tokens
-    function batchMint (
+    function batchMint(
         address to,
         uint256[] memory amounts,
         address[] memory eventAddresses,
@@ -324,13 +367,12 @@ contract Ticket is ERC1155 {
         return Event(events[ticketID]).metadata();
     }
 
-    function uri(uint256 ticketID) public view override returns (string memory) {
+    function uri(uint256 ticketID)
+        public
+        view
+        override
+        returns (string memory)
+    {
         return info[ticketID];
     }
-}
-
-interface Event {
-    string public name;
-    address public owner;
-    string public metadata;
 }
