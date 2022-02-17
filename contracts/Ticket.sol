@@ -235,18 +235,16 @@ abstract contract ERC1155 {
   function _batchMint(
     address to,
     uint256[] memory amounts,
-    address[] memory eventAddresses,
+    address eventAddress,
     string[] memory metadata
   ) internal {
-    uint256 eventsLength = eventAddresses.length; // Saves MLOADs.
+    uint256 amountsLength = amounts.length; // Saves MLOADs.
 
-    require(eventsLength == amounts.length, "LENGTH_MISMATCH");
+    uint256[] memory ids = new uint256[](amountsLength);
 
-    uint256[] memory ids = new uint256[](eventsLength);
-
-    for (uint256 i = 0; i < eventsLength; ) {
+    for (uint256 i = 0; i < amountsLength; ) {
       require(
-        msg.sender == Event(eventAddresses[i]).owner(),
+        msg.sender == Event(eventAddress).owner(),
         "NOT_EVENT_OWNER"
       );
 
@@ -255,7 +253,7 @@ abstract contract ERC1155 {
 
       balanceOf[to][id] += amounts[i];
       info[id] = metadata[i];
-      events[id] = eventAddresses[i];
+      events[id] = eventAddress;
 
       // after minting
       _tokenSupply.increment();
@@ -350,10 +348,10 @@ contract Ticket is ERC1155 {
   function batchMint(
     address to,
     uint256[] memory amounts,
-    address[] memory eventAddresses,
+    address eventAddress,
     string[] memory metadata
   ) public {
-    _batchMint(to, amounts, eventAddresses, metadata);
+    _batchMint(to, amounts, eventAddress, metadata);
   }
 
   function eventUri(uint256 ticketID) public view returns (string memory) {
