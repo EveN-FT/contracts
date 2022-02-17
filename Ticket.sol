@@ -182,7 +182,7 @@ abstract contract ERC1155 {
         address eventAddress,
         string memory metadata
     ) internal {
-        require(msg.sender == Event(eventAddress).owner, "NOT_EVENT_OWNER");
+        require(msg.sender == Event(eventAddress).owner(), "NOT_EVENT_OWNER");
 
         uint256 id = _tokenSupply.current();
         balanceOf[to][id] += amount;
@@ -216,7 +216,7 @@ abstract contract ERC1155 {
 
         for (uint256 i = 0; i < eventsLength; ) {
 
-            require(msg.sender == Event(eventAddresses[i]).owner, "NOT_EVENT_OWNER");
+            require(msg.sender == Event(eventAddresses[i]).owner(), "NOT_EVENT_OWNER");
 
             uint256 id = _tokenSupply.current();
             ids[i]= id;
@@ -321,7 +321,7 @@ contract Ticket is ERC1155 {
     }
 
     function eventUri(uint256 ticketID) public view returns (string memory) {
-        return Event(events[ticketID]).metadata;
+        return Event(events[ticketID]).metadata();
     }
 
     function uri(uint256 ticketID) public view override returns (string memory) {
