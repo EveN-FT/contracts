@@ -216,52 +216,53 @@ abstract contract ERC1155 {
 
         emit TransferSingle(msg.sender, address(0), to, id, amount);
 
-    require(
-      to.code.length == 0
-        ? to != address(0)
-        : ERC1155TokenReceiver(to).onERC1155Received(
-          msg.sender,
-          address(0),
-          id,
-          amount,
-          ""
-        ) == ERC1155TokenReceiver.onERC1155Received.selector,
-      "UNSAFE_RECIPIENT"
-    );
-    // after minting
-    _tokenSupply.increment();
-  }
+        require(
+            to.code.length == 0
+                ? to != address(0)
+                : ERC1155TokenReceiver(to).onERC1155Received(
+                    msg.sender,
+                    address(0),
+                    id,
+                    amount,
+                    ""
+                ) == ERC1155TokenReceiver.onERC1155Received.selector,
+            "UNSAFE_RECIPIENT"
+        );
+        // after minting
+        _tokenSupply.increment();
+    }
 
-  function _batchMint(
-    address to,
-    uint256[] memory amounts,
-    address eventAddress,
-    string[] memory metadata
-  ) internal {
-    uint256 amountsLength = amounts.length; // Saves MLOADs.
+    function _batchMint(
+        address to,
+        uint256[] memory amounts,
+        address eventAddress,
+        string[] memory metadata
+    ) internal {
+        uint256 amountsLength = amounts.length; // Saves MLOADs.
 
-    uint256[] memory ids = new uint256[](amountsLength);
+        uint256[] memory ids = new uint256[](amountsLength);
 
-    for (uint256 i = 0; i < amountsLength; ) {
-      require(
-        msg.sender == Event(eventAddress).owner(),
-        "NOT_EVENT_OWNER"
-      );
+        for (uint256 i = 0; i < amountsLength; ) {
+            require(
+                msg.sender == Event(eventAddress).owner(),
+                "NOT_EVENT_OWNER"
+            );
 
-      uint256 id = _tokenSupply.current();
-      ids[i] = id;
+            uint256 id = _tokenSupply.current();
+            ids[i] = id;
 
-      balanceOf[to][id] += amounts[i];
-      info[id] = metadata[i];
-      events[id] = eventAddress;
+            balanceOf[to][id] += amounts[i];
+            info[id] = metadata[i];
+            events[id] = eventAddress;
 
-      // after minting
-      _tokenSupply.increment();
-      // An array can't have a total length
-      // larger than the max uint256 value.
-      unchecked {
-        i++;
-      }
+            // after minting
+            _tokenSupply.increment();
+            // An array can't have a total length
+            // larger than the max uint256 value.
+            unchecked {
+                i++;
+            }
+        }
     }
 
     function _batchMint(
@@ -378,15 +379,15 @@ contract Ticket is ERC1155 {
         _mint(to, amount, eventAddress, metadata);
     }
 
-  // Mint Non-Funglible tokens
-  function batchMint(
-    address to,
-    uint256[] memory amounts,
-    address eventAddress,
-    string[] memory metadata
-  ) public {
-    _batchMint(to, amounts, eventAddress, metadata);
-  }
+    // Mint Non-Funglible tokens
+    function batchMint(
+        address to,
+        uint256[] memory amounts,
+        address eventAddress,
+        string[] memory metadata
+    ) public {
+        _batchMint(to, amounts, eventAddress, metadata);
+    }
 
     function eventUri(uint256 ticketID) public view returns (string memory) {
         return Event(events[ticketID]).metadata();
