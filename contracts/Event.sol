@@ -19,8 +19,4 @@ contract Event {
     function setMetadata(string memory url) public {
         metadata = url;
     }
-
-    function getMetadata() public view returns (string memory) {
-        return metadata;
-    }
 }
