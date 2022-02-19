@@ -15,4 +15,12 @@ contract Event {
         owner = _owner;
         metadata = _metadata;
     }
+
+    function setMetadata(string memory url) public {
+        metadata = url;
+    }
+
+    function getMetadata() public view returns (string memory) {
+        return metadata;
+    }
 }
