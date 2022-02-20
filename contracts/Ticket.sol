@@ -126,15 +126,19 @@ contract Ticket is ERC721Ticket {
         uint256 amount,
         uint256 amountInGwei
     ) public returns (uint256[] memory) {
-        uint256[] memory ids = new uint256[](amount);
-
         require(msg.sender == Event(eventAddr).owner(), "NOT_EVENT_OWNER");
+
+        // Save owner address to mint to
+        Event ev = Event(eventAddr);
+        address eventOwner = ev.owner();
+
+        uint256[] memory ids = new uint256[](amount);
 
         for (uint256 i = 0; i < amount; ) {
             _tokenIds.increment();
 
             uint256 newItemId = _tokenIds.current();
-            _mint(address(0), newItemId);
+            _mint(eventOwner, newItemId);
             _setTokenURI(newItemId, tokenURI);
             _setAddress(newItemId, eventAddr);
             _ticketPrices[i] = amountInGwei;
@@ -154,12 +158,13 @@ contract Ticket is ERC721Ticket {
         require(msg.value > _ticketPrices[tokenId], "NOT_ENOUGH_ETH");
         require(ownerOf(tokenId) == address(0), "TICKET_NOT_FOR_SALE");
 
-        // Transfer the ticket from 0x0 to buyer
-        transferFrom(address(0), msg.sender, tokenId);
-
-        // Transfers the eth to the event holder
         Event ev = Event(_address(tokenId));
         address eventOwner = ev.owner();
+
+        // Transfer the ticket from owner to buyer
+        _transfer(eventOwner, msg.sender, tokenId);
+
+        // Transfers the eth to the event holder
         payable(eventOwner).transfer(msg.value);
     }
 
