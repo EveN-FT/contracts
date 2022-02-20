@@ -116,12 +116,15 @@ contract Ticket is ERC721Ticket {
     using Counters for Counters.Counter;
     Counters.Counter private _tokenIds;
 
+    mapping(uint256 => uint256) private _ticketPrices;
+
     constructor() ERC721("Ticket", "tix") {}
 
-    function mintGA(
+    function mint(
         address eventAddr,
         string memory tokenURI,
-        uint256 amount
+        uint256 amount,
+        uint256 amountInGwei
     ) public returns (uint256[] memory) {
         uint256[] memory ids = new uint256[](amount);
 
@@ -131,9 +134,10 @@ contract Ticket is ERC721Ticket {
             _tokenIds.increment();
 
             uint256 newItemId = _tokenIds.current();
-            _mint(msg.sender, newItemId);
+            _mint(address(0), newItemId);
             _setTokenURI(newItemId, tokenURI);
             _setAddress(newItemId, eventAddr);
+            _ticketPrices[i] = amountInGwei;
             ids[i] = newItemId;
 
             // An array can't have a total length
@@ -143,6 +147,20 @@ contract Ticket is ERC721Ticket {
             }
         }
         return ids;
+    }
+
+    // Buy a ticket
+    function buy(uint256 tokenId) public payable {
+        require(msg.value > _ticketPrices[tokenId], "NOT_ENOUGH_ETH");
+        require(ownerOf(tokenId) == address(0), "TICKET_NOT_FOR_SALE");
+
+        // Transfer the ticket from 0x0 to buyer
+        transferFrom(address(0), msg.sender, tokenId);
+
+        // Transfers the eth to the event holder
+        Event ev = Event(_address(tokenId));
+        address eventOwner = ev.owner();
+        payable(eventOwner).transfer(msg.value);
     }
 
     function eventAddress(uint256 tokenId) public view returns (address) {
